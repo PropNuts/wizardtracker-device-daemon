@@ -101,9 +101,15 @@ class TrackerController:
             LOGGER.info('Stopped tracking.')
             return True
 
-    def set_channel(self, receiver_id, channel):
+    def set_frequency(self, receiver_id, frequency):
         with self._control_lock:
-            return False
+            if not self._serial.is_open:
+                return False
+
+            command = 'f {} {}'.format(receiver_id, frequency).encode('ascii')
+            self._serial.write(command)
+
+            return True
 
     def get_ports(self):
         ports = serial.tools.list_ports.comports()

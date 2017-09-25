@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class TrackerController:
-    BAUD_RATE = 115200
+    BAUD_RATE = 250000
 
     def __init__(self):
         self._should_stop = False
@@ -28,6 +28,9 @@ class TrackerController:
         self._round_start_timestamp = None
 
         self._read_hz_timer = CycleTimer()
+
+        self.voltage = None
+        self.temperature = None
 
     def loop(self):
         LOGGER.info('Starting up...')
@@ -109,25 +112,35 @@ class TrackerController:
     def _loop(self):
         while not self._should_stop:
             with self._control_lock:
-                self._log()
+                self._parse_serial()
 
             self._db.sync()
 
-    def _log(self):
+    def _parse_serial(self):
         if self._serial.is_open:
             line = self._serial.readline()
             if not line:
                 return
 
-            if self._should_log:
-                timestamp = time.clock() - self._round_start_timestamp
+            line = line.decode('ascii').strip()
+            tokens = line.split(' ')
+            command = tokens[0]
 
-                line = line.decode('utf8').strip()
-                readings = line.split('\t')
-                readings = [int(r) for r in readings]
+            if command == 'r':
+                if self._should_log:
+                    timestamp = time.clock() - self._round_start_timestamp
 
-                self._db.log(timestamp, readings)
-                # LOGGER.debug('RSSI: %s', readings)
+                    readings = tokens[1:]
+                    readings = [int(r) for r in readings]
+
+                    self._db.log(timestamp, readings)
+                    LOGGER.debug('RSSI: %s', readings)
+            elif command == 'v':
+                self.voltage = tokens[1]
+                LOGGER.debug('Voltage: %sV', self.voltage)
+            elif command == 't':
+                self.temperature = tokens[1]
+                LOGGER.debug('Temperature: %sC', self.temperature)
 
             self._read_hz_timer.tick()
             if self._read_hz_timer.time_since_reset >= 15:

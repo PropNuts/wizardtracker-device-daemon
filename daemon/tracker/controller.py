@@ -142,10 +142,10 @@ class TrackerController:
                     self._db.log(timestamp, readings)
                     LOGGER.debug('RSSI: %s', readings)
             elif command == 'v':
-                self.voltage = tokens[1]
+                self.voltage = float(tokens[1])
                 LOGGER.debug('Voltage: %sV', self.voltage)
             elif command == 't':
-                self.temperature = tokens[1]
+                self.temperature = float(tokens[1])
                 LOGGER.debug('Temperature: %sC', self.temperature)
 
             self._read_hz_timer.tick()
@@ -153,3 +153,11 @@ class TrackerController:
                 hz = self._read_hz_timer.hz
                 LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
                 self._read_hz_timer.reset()
+
+    @property
+    def is_connected(self):
+        return self._serial.is_open
+
+    @property
+    def hz(self):
+        return self._read_hz_timer.hz

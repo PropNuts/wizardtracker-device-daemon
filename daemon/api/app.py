@@ -49,3 +49,18 @@ def disconnect():
     return jsonify({
         'success': success
     })
+
+@app.route('/status')
+def status():
+    json_status = {
+        'connected': app.tracker.is_connected
+    }
+
+    if app.tracker.is_connected:
+        json_status.update({
+            'voltage': app.tracker.voltage,
+            'temperature': app.tracker.temperature,
+            'hz': app.tracker.hz
+        })
+
+    return jsonify(json_status)

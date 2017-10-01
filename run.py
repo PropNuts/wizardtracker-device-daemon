@@ -1,4 +1,6 @@
-from daemon import main
+from daemon import DaemonRunner
+
 
 if __name__ == '__main__':
-    main()
+    d = DaemonRunner()
+    d.start()

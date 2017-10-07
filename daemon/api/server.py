@@ -13,6 +13,9 @@ class QuietWSGIRequestHandler(WSGIRequestHandler):
         LOGGER.debug('%s {}'.format(format), self.client_address[0], *args)
 
 class ApiServer:
+    HOST = '127.0.0.1'
+    PORT = 5000
+
     def __init__(self):
         self._httpd = None
         self._lock = threading.Lock()
@@ -21,9 +24,9 @@ class ApiServer:
         self._lock.acquire(True)
 
         app.tracker = tracker
-        self._httpd = make_server('0.0.0.0', 5000, app,
+        self._httpd = make_server(self.HOST, self.PORT, app,
             handler_class=QuietWSGIRequestHandler)
-        LOGGER.info('Starting server on 0.0.0.0:5000...')
+        LOGGER.info('Starting API server on %s:%d...', self.HOST, self.PORT)
 
         self._lock.release()
         self._httpd.serve_forever()

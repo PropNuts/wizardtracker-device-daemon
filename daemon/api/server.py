@@ -16,17 +16,18 @@ class ApiServer:
     HOST = '127.0.0.1'
     PORT = 5000
 
-    def __init__(self):
+    def __init__(self, tracker):
         self._httpd = None
         self._lock = threading.Lock()
+        self._tracker = tracker
 
-    def start(self, tracker):
+    def start(self):
         self._lock.acquire(True)
 
-        app.tracker = tracker
+        app.tracker = self._tracker
         self._httpd = make_server(self.HOST, self.PORT, app,
             handler_class=QuietWSGIRequestHandler)
-        LOGGER.info('Starting API server on %s:%d...', self.HOST, self.PORT)
+        LOGGER.info('Listening on %s:%d...', self.HOST, self.PORT)
 
         self._lock.release()
         self._httpd.serve_forever()

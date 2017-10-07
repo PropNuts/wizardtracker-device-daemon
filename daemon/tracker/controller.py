@@ -5,7 +5,6 @@ import time
 import serial
 import serial.tools.list_ports
 
-from .db import DatabaseWriter
 from ..utils.cycletimer import CycleTimer
 
 
@@ -15,34 +14,26 @@ LOGGER = logging.getLogger(__name__)
 class TrackerController:
     BAUD_RATE = 250000
 
-    def __init__(self):
+    def __init__(self, datastream):
         self._should_stop = False
         self._control_lock = threading.RLock()
+        self._datastream = datastream
 
         self._serial = serial.Serial()
         self._serial.baudrate = self.BAUD_RATE
-
-        self._db = DatabaseWriter()
-        self._should_log = False
-        self._current_round_id = None
-        self._round_start_timestamp = None
 
         self._read_hz_timer = CycleTimer()
 
         self.voltage = None
         self.temperature = None
 
-    def loop(self):
+    def start(self):
         LOGGER.info('Starting up...')
-
-        self._db.open()
         self._loop()
 
         LOGGER.info('Shutting down...')
         if self._serial.is_open:
             self._serial.close()
-
-        self._db.close()
 
     def stop(self):
         self._should_stop = True
@@ -74,31 +65,9 @@ class TrackerController:
             if not self._serial.is_open:
                 return True
 
-            self.stop_tracking()
             self._serial.close()
 
             LOGGER.info('Disconnected from device.')
-            return True
-
-    def start_tracking(self, round_id):
-        with self._control_lock:
-            if self._should_log or not self._serial.is_open:
-                return False
-
-            self._should_log = True
-            self._current_round_id = round_id
-            self._round_start_timestamp = time.clock()
-            self._db.prepare_round(round_id)
-
-            LOGGER.info('Started tracking for round %d.', round_id)
-            return True
-
-    def stop_tracking(self):
-        with self._control_lock:
-            self._should_log = False
-            self._current_round_id = None
-
-            LOGGER.info('Stopped tracking.')
             return True
 
     def set_frequency(self, receiver_id, frequency):
@@ -120,8 +89,6 @@ class TrackerController:
             with self._control_lock:
                 self._parse_serial()
 
-            self._db.sync()
-
     def _parse_serial(self):
         if self._serial.is_open:
             line = self._serial.readline()
@@ -131,21 +98,20 @@ class TrackerController:
             line = line.decode('ascii').strip()
             tokens = line.split(' ')
             command = tokens[0]
+            args = tokens[1:]
 
             if command == 'r':
-                if self._should_log:
-                    timestamp = time.clock() - self._round_start_timestamp
+                timestamp = time.clock()
+                readings = [int(r) for r in args]
+                queue_data = [timestamp] + readings
 
-                    readings = tokens[1:]
-                    readings = [int(r) for r in readings]
-
-                    self._db.log(timestamp, readings)
-                    LOGGER.debug('RSSI: %s', readings)
+                self._datastream.queue_data(queue_data)
+                # LOGGER.debug('RSSI: %s', readings)
             elif command == 'v':
-                self.voltage = float(tokens[1])
+                self.voltage = float(args[0])
                 LOGGER.debug('Voltage: %sV', self.voltage)
             elif command == 't':
-                self.temperature = float(tokens[1])
+                self.temperature = float(args[0])
                 LOGGER.debug('Temperature: %sC', self.temperature)
 
             self._read_hz_timer.tick()

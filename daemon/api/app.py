@@ -4,21 +4,6 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 
-@app.route('/start')
-def start():
-    round_id = int(request.args.get('id'))
-    success = app.tracker.start_tracking(round_id)
-    return jsonify({
-        'success': success
-    })
-
-@app.route('/stop')
-def stop():
-    success = app.tracker.stop_tracking()
-    return jsonify({
-        'success': success
-    })
-
 @app.route('/ports')
 def get_ports():
     ports = app.tracker.get_ports()

@@ -1,6 +1,6 @@
-from daemon import DaemonRunner
+from device_daemon import Runner
 
 
 if __name__ == '__main__':
-    d = DaemonRunner()
+    d = Runner()
     d.start()

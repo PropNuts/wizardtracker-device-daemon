@@ -50,7 +50,7 @@ class TrackerController:
 
             try:
                 self._serial.port = port
-                self._serial.timeout = 0
+                self._serial.timeout = 0 # Non-blocking
                 self._serial.open()
                 self._read_hz_timer.reset()
             except serial.SerialException as err:
@@ -109,10 +109,10 @@ class TrackerController:
                 # LOGGER.debug('RSSI: %s', readings)
             elif command == 'v':
                 self.voltage = float(args[0])
-                LOGGER.debug('Voltage: %sV', self.voltage)
+                # LOGGER.debug('Voltage: %sV', self.voltage)
             elif command == 't':
                 self.temperature = float(args[0])
-                LOGGER.debug('Temperature: %sC', self.temperature)
+                # LOGGER.debug('Temperature: %sC', self.temperature)
 
             self._read_hz_timer.tick()
             if self._read_hz_timer.time_since_reset >= 15:

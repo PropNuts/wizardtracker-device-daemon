@@ -1,6 +1,6 @@
-# wizardtracker-logger
+# wizardtracker-device-daemon
 
-This project contains the RSSI logging and device control daemon for the
+This project contains the device control and data streaming daemon for the
 PropNuts WizardTracker.
 
 ## Setup

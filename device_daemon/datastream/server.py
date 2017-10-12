@@ -50,12 +50,15 @@ class DataStreamServer:
                 try:
                     data = self._data_queue.get()
                     data = [str(d) for d in data]
-                    data = '{}\r\n'.format(' '.join(data)).encode()
+                    data = '{}\n'.format(' '.join(data)).encode()
 
                     for sock in self._client_socks:
                         try:
                             sock.sendall(data)
-                        except ConnectionAbortedError:
+                        except (
+                            ConnectionAbortedError,
+                            ConnectionResetError
+                        ):
                             LOGGER.info('%s disconnected, pruning...',
                                 sock.getsockname()[0])
                             self._prune_socket(sock)

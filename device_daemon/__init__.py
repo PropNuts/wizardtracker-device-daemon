@@ -13,7 +13,7 @@ from .datastream.server import DataStreamServer
 LOGGER = logging.getLogger(__name__)
 
 
-class DaemonRunner:
+class Runner:
     def __init__(self):
         self._datastream_server = DataStreamServer()
         self._tracker = TrackerController(self._datastream_server)

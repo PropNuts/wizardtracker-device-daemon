@@ -192,6 +192,7 @@ class TrackerController:
     def _encode_serial_command(command, *args):
         command_string = None
         if args:
+            args = [str(a) for a in args]
             command_string = '{} {}\n'.format(command, ' '.join(args))
         else:
             command_string = '{}\n'.format(command)

@@ -18,7 +18,7 @@ def get_ports():
         'success': 'true'
     })
 
-@app.route('/connect')
+@app.route('/connect', methods=['POST'])
 def connect():
     port = request.args.get('port')
     success = app.tracker.connect(port)
@@ -27,7 +27,7 @@ def connect():
         'success': success
     })
 
-@app.route('/disconnect')
+@app.route('/disconnect', methods=['POST'])
 def disconnect():
     success = app.tracker.disconnect()
 

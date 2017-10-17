@@ -58,7 +58,8 @@ def status():
             'frequencies': app.tracker.frequencies,
             'voltage': app.tracker.voltage,
             'temperature': app.tracker.temperature,
-            'hz': app.tracker.hz
+            'hz': app.tracker.hz,
+            'rssi': app.tracker.rssi
         })
 
     return jsonify(json_status)

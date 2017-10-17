@@ -41,6 +41,7 @@ class TrackerController:
         self.frequencies = None
         self.voltage = None
         self.temperature = None
+        self.rssi = None
 
     def start(self):
         LOGGER.info('Starting up...')
@@ -158,6 +159,7 @@ class TrackerController:
             queue_data = [timestamp] + readings
 
             self._datastream.queue_data(queue_data)
+            self.rssi = tuple(readings)
             #LOGGER.debug('RSSI: %s', readings)
         elif command == 'v':
             self.voltage = float(args[0])

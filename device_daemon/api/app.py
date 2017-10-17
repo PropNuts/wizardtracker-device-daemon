@@ -38,11 +38,14 @@ def disconnect():
 @app.route('/status')
 def status():
     json_status = {
-        'connected': app.tracker.is_connected
+        'connected': app.tracker.is_connected,
+        'ready': app.tracker.is_ready
     }
 
-    if app.tracker.is_connected:
+    if app.tracker.is_ready:
         json_status.update({
+            'receiverCount': app.tracker.receiver_count,
+            'frequencies': app.tracker.frequencies,
             'voltage': app.tracker.voltage,
             'temperature': app.tracker.temperature,
             'hz': app.tracker.hz

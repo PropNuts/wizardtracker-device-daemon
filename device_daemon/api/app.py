@@ -35,6 +35,16 @@ def disconnect():
         'success': success
     })
 
+@app.route('/set_frequency', methods=['POST'])
+def set_frequency():
+    receiver_id = int(request.args.get('id'))
+    frequency = int(request.args.get('frequency'))
+
+    success = app.tracker.set_frequency(receiver_id, frequency)
+    return jsonify({
+        'success': success
+    })
+
 @app.route('/status')
 def status():
     json_status = {

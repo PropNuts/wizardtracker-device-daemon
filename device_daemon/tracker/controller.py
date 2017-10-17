@@ -85,6 +85,7 @@ class TrackerController:
                 return True
 
             self._serial.close()
+            self._state = TrackerState(TrackerState.DISCONNECTED)
 
             LOGGER.info('Disconnected from device.')
             return True

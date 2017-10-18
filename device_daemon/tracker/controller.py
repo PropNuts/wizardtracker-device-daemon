@@ -12,13 +12,31 @@ from ..utils.cycletimer import CycleTimer
 LOGGER = logging.getLogger(__name__)
 
 
+def _decode_serial_command(line):
+    line = line.decode('ascii').strip()
+    tokens = line.split(' ')
+    command = tokens[0]
+    args = tuple(tokens[1:])
+
+    return command, args
+
+def _encode_serial_command(command, *args):
+    command_string = None
+    if args:
+        args = [str(a) for a in args]
+        command_string = '{} {}\n'.format(command, ' '.join(args))
+    else:
+        command_string = '{}\n'.format(command)
+
+    return command_string.encode('ascii')
+
+
 @enum.unique
 class TrackerState(enum.Enum):
     DISCONNECTED = 1
     WAITING_FOR_FIRST_DATA = 2
     WAITING_FOR_STATUS = 3
     READY = 4
-
 
 class TrackerController:
     BAUD_RATE = 250000
@@ -117,7 +135,7 @@ class TrackerController:
             if not line:
                 return
 
-            command, args = TrackerController._decode_serial_command(line)
+            command, args = _decode_serial_command(line)
             if self._state == TrackerState.WAITING_FOR_FIRST_DATA:
                 self._parse_serial_waiting_for_first_data(command, args)
             elif self._state == TrackerState.WAITING_FOR_STATUS:
@@ -170,7 +188,7 @@ class TrackerController:
             #LOGGER.debug('Temperature: %sC', self.temperature)
 
     def _write_serial_command(self, command, *args):
-        encoded_command = TrackerController._encode_serial_command(
+        encoded_command = _encode_serial_command(
             command, *args)
 
         self._serial.write(encoded_command)
@@ -182,26 +200,6 @@ class TrackerController:
             hz = self._read_hz_timer.hz
             #LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
             self._read_hz_timer.reset()
-
-    @staticmethod
-    def _decode_serial_command(line):
-        line = line.decode('ascii').strip()
-        tokens = line.split(' ')
-        command = tokens[0]
-        args = tuple(tokens[1:])
-
-        return command, args
-
-    @staticmethod
-    def _encode_serial_command(command, *args):
-        command_string = None
-        if args:
-            args = [str(a) for a in args]
-            command_string = '{} {}\n'.format(command, ' '.join(args))
-        else:
-            command_string = '{}\n'.format(command)
-
-        return command_string.encode('ascii')
 
     @property
     def is_connected(self):

@@ -22,6 +22,7 @@ class TrackerState(enum.Enum):
 
 class TrackerController:
     BAUD_RATE = 250000
+    TIMEOUT = 1
 
     def __init__(self, datastream):
         self._should_stop = False
@@ -33,6 +34,7 @@ class TrackerController:
 
         self._serial = serial.Serial()
         self._serial.baudrate = self.BAUD_RATE
+        self._serial.timeout = self.TIMEOUT
 
         self._read_hz_timer = CycleTimer()
 
@@ -66,7 +68,6 @@ class TrackerController:
 
             try:
                 self._serial.port = port
-                self._serial.timeout = 1
                 self._serial.open()
                 self._read_hz_timer.reset()
             except serial.SerialException as err:

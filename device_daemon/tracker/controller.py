@@ -94,7 +94,7 @@ class TrackerController:
 
     def set_frequency(self, receiver_id, frequency):
         with self._control_lock:
-            if not self.is_ready
+            if not self.is_ready:
                 return False
 
             self._write_serial_command('f', receiver_id, frequency)

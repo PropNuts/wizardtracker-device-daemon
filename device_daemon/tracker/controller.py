@@ -93,7 +93,7 @@ class TrackerController:
 
     def set_frequency(self, receiver_id, frequency):
         with self._control_lock:
-            if not self._serial.is_open:
+            if not self.is_ready
                 return False
 
             self._write_serial_command('f', receiver_id, frequency)
@@ -179,7 +179,7 @@ class TrackerController:
         self._read_hz_timer.tick()
         if self._read_hz_timer.time_since_reset >= 15:
             hz = self._read_hz_timer.hz
-            LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
+            #LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
             self._read_hz_timer.reset()
 
     @staticmethod

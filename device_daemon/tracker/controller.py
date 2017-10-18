@@ -25,6 +25,13 @@ class TrackerController:
     TIMEOUT = 1
 
     def __init__(self, datastream):
+        self.receiver_count = None
+        self.raw_mode = None
+        self.frequencies = None
+        self.voltage = None
+        self.temperature = None
+        self.rssi = None
+
         self._should_stop = False
         self._control_lock = threading.RLock()
 
@@ -37,13 +44,6 @@ class TrackerController:
         self._serial.timeout = self.TIMEOUT
 
         self._read_hz_timer = CycleTimer()
-
-        self.receiver_count = None
-        self.raw_mode = None
-        self.frequencies = None
-        self.voltage = None
-        self.temperature = None
-        self.rssi = None
 
     def start(self):
         LOGGER.info('Starting up...')
@@ -138,8 +138,8 @@ class TrackerController:
         if command != '?':
             return
 
-        self.raw_mode = int(args[-1]) == 1
         self.receiver_count = int(args[0])
+        self.raw_mode = int(args[-1]) == 1
         self.frequencies = [
             int(f) for f in args[1:self.receiver_count + 1]
         ]

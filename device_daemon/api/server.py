@@ -14,7 +14,7 @@ class QuietWSGIRequestHandler(WSGIRequestHandler):
 
 class ApiServer:
     HOST = '127.0.0.1'
-    PORT = 5000
+    PORT = 3091
 
     def __init__(self, tracker):
         self._httpd = None

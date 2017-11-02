@@ -30,6 +30,23 @@ def _encode_serial_command(command, *args):
 
     return command_string.encode('ascii')
 
+class NonBlockingLineReader:
+    def __init__(self):
+        self._buffer = bytearray()
+
+    def read_line(self, line):
+        if not line:
+            return None
+
+        self._buffer.extend(line)
+
+        end_index = self._buffer.find(b'\n')
+        if end_index >= 0:
+            found_line = bytes(self._buffer[:end_index + 1])
+            del self._buffer[0:end_index + 1]
+            return found_line
+
+        return None
 
 @enum.unique
 class TrackerState(enum.Enum):
@@ -40,7 +57,8 @@ class TrackerState(enum.Enum):
 
 class TrackerController:
     BAUD_RATE = 250000
-    TIMEOUT = 1
+    TIMEOUT = 0
+    CHUNK_SIZE = 32
 
     def __init__(self, datastream):
         self.receiver_count = None
@@ -60,6 +78,7 @@ class TrackerController:
         self._serial = serial.Serial()
         self._serial.baudrate = self.BAUD_RATE
         self._serial.timeout = self.TIMEOUT
+        self._line_reader = NonBlockingLineReader()
 
         self._read_hz_timer = CycleTimer()
 
@@ -131,7 +150,9 @@ class TrackerController:
 
     def _parse_serial(self):
         if self._serial.is_open:
-            line = self._serial.readline()
+            incoming_bytes = self._serial.read(
+                size=TrackerController.CHUNK_SIZE)
+            line = self._line_reader.read_line(incoming_bytes)
             if not line:
                 return
 

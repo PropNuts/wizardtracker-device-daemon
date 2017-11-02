@@ -34,12 +34,13 @@ class NonBlockingLineReader:
     def __init__(self):
         self._buffer = bytearray()
 
-    def read_line(self, line):
-        if not line:
-            return None
+    def append_data(self, data):
+        if not data:
+            return
 
-        self._buffer.extend(line)
+        self._buffer.extend(data)
 
+    def read_line(self):
         end_index = self._buffer.find(b'\n')
         if end_index >= 0:
             found_line = bytes(self._buffer[:end_index + 1])
@@ -58,7 +59,7 @@ class TrackerState(enum.Enum):
 class TrackerController:
     BAUD_RATE = 250000
     TIMEOUT = 0
-    CHUNK_SIZE = 32
+    CHUNK_SIZE = 128
 
     def __init__(self, datastream):
         self.receiver_count = None
@@ -152,19 +153,28 @@ class TrackerController:
         if self._serial.is_open:
             incoming_bytes = self._serial.read(
                 size=TrackerController.CHUNK_SIZE)
-            line = self._line_reader.read_line(incoming_bytes)
-            if not line:
-                return
+            self._line_reader.append_data(incoming_bytes)
 
+            while True:
+                line = self._line_reader.read_line()
+                if not line:
+                    break
+                self._parse_line(line)
+                self._tick_read_hz_timer()
+
+    def _parse_line(self, line):
+        try:
             command, args = _decode_serial_command(line)
-            if self._state == TrackerState.WAITING_FOR_FIRST_DATA:
-                self._parse_serial_waiting_for_first_data(command, args)
-            elif self._state == TrackerState.WAITING_FOR_STATUS:
-                self._parse_serial_waiting_for_status(command, args)
-            elif self._state == TrackerState.READY:
-                self._parse_serial_ready(command, args)
+        except UnicodeDecodeError:
+            LOGGER.warning("Invalid data received. Skipping...")
+            return
 
-            self._tick_read_hz_timer()
+        if self._state == TrackerState.WAITING_FOR_FIRST_DATA:
+            self._parse_serial_waiting_for_first_data(command, args)
+        elif self._state == TrackerState.WAITING_FOR_STATUS:
+            self._parse_serial_waiting_for_status(command, args)
+        elif self._state == TrackerState.READY:
+            self._parse_serial_ready(command, args)
 
     def _parse_serial_waiting_for_first_data(self, command, args):
         LOGGER.info('First data received.')

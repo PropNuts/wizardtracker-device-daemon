@@ -151,16 +151,21 @@ class TrackerController:
 
     def _parse_serial(self):
         if self._serial.is_open:
-            incoming_bytes = self._serial.read(
-                size=TrackerController.CHUNK_SIZE)
-            self._line_reader.append_data(incoming_bytes)
+            try:
+                incoming_bytes = self._serial.read(
+                    size=TrackerController.CHUNK_SIZE)
+                self._line_reader.append_data(incoming_bytes)
 
-            while True:
-                line = self._line_reader.read_line()
-                if not line:
-                    break
-                self._parse_line(line)
-                self._tick_read_hz_timer()
+                while True:
+                    line = self._line_reader.read_line()
+                    if not line:
+                        break
+                    self._parse_line(line)
+                    self._tick_read_hz_timer()
+            except serial.SerialException:
+                LOGGER.error('Serial connection lost.')
+                self._serial.close()
+                self._state = TrackerState(TrackerState.DISCONNECTED)
 
     def _parse_line(self, line):
         try:
@@ -170,13 +175,13 @@ class TrackerController:
             return
 
         if self._state == TrackerState.WAITING_FOR_FIRST_DATA:
-            self._parse_serial_waiting_for_first_data(command, args)
+            self._parse_serial_waiting_for_first_data()
         elif self._state == TrackerState.WAITING_FOR_STATUS:
             self._parse_serial_waiting_for_status(command, args)
         elif self._state == TrackerState.READY:
             self._parse_serial_ready(command, args)
 
-    def _parse_serial_waiting_for_first_data(self, command, args):
+    def _parse_serial_waiting_for_first_data(self):
         LOGGER.info('First data received.')
 
         self._state = TrackerState.WAITING_FOR_STATUS
@@ -231,7 +236,7 @@ class TrackerController:
     def _tick_read_hz_timer(self):
         self._read_hz_timer.tick()
         if self._read_hz_timer.time_since_reset >= 15:
-            hz = self._read_hz_timer.hz
+            #hz = self._read_hz_timer.hz
             #LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
             self._read_hz_timer.reset()
 

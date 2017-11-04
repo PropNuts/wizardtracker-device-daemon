@@ -206,7 +206,10 @@ class TrackerController:
         if command == 'r':
             timestamp = time.clock()
             readings = [int(r) for r in args]
-            queue_data = [timestamp] + readings
+            queue_data = {
+                'timestamp': timestamp,
+                'rssi': readings
+            }
 
             self._datastream.queue_data(queue_data)
             self.rssi = tuple(readings)

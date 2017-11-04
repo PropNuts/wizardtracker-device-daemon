@@ -57,11 +57,9 @@ class TrackerState(enum.Enum):
     READY = 4
 
 class TrackerController:
-    BAUD_RATE = 250000
-    TIMEOUT = 0
     CHUNK_SIZE = 128
 
-    def __init__(self, datastream):
+    def __init__(self, datastream, baudrate=250000):
         self.receiver_count = None
         self.raw_mode = None
         self.frequencies = None
@@ -77,8 +75,8 @@ class TrackerController:
         self._datastream = datastream
 
         self._serial = serial.Serial()
-        self._serial.baudrate = self.BAUD_RATE
-        self._serial.timeout = self.TIMEOUT
+        self._serial.baudrate = baudrate
+        self._serial.timeout = 0
         self._line_reader = NonBlockingLineReader()
 
         self._read_hz_timer = CycleTimer()
@@ -218,13 +216,13 @@ class TrackerController:
 
             self._datastream.queue_data(queue_data)
             self.rssi = tuple(readings)
-            #LOGGER.debug('RSSI: %s', readings)
+            LOGGER.debug('RSSI: %s', readings)
         elif command == 'v':
             self.voltage = float(args[0])
-            #LOGGER.debug('Voltage: %sV', self.voltage)
+            LOGGER.debug('Voltage: %sV', self.voltage)
         elif command == 't':
             self.temperature = float(args[0])
-            #LOGGER.debug('Temperature: %sC', self.temperature)
+            LOGGER.debug('Temperature: %sC', self.temperature)
 
     def _write_serial_command(self, command, *args):
         encoded_command = _encode_serial_command(
@@ -236,8 +234,8 @@ class TrackerController:
     def _tick_read_hz_timer(self):
         self._read_hz_timer.tick()
         if self._read_hz_timer.time_since_reset >= 15:
-            #hz = self._read_hz_timer.hz
-            #LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
+            hz = self._read_hz_timer.hz
+            LOGGER.debug('RSSI Rate: %dHz (%.3fs accuracy)', hz, 1 / hz)
             self._read_hz_timer.reset()
 
     @property

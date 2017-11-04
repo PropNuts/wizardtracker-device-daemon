@@ -7,7 +7,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DataStreamServer:
-    def __init__(self):
+    def __init__(self, redis_host, redis_port):
+        self._redis_host = redis_host
+        self._redis_port = redis_port
+
         self._should_exit = False
         self._data_queue = queue.Queue()
         self._redis = None
@@ -16,8 +19,10 @@ class DataStreamServer:
         LOGGER.info('Starting up...')
 
         self._redis = redis.StrictRedis(
-            socket_connect_timeout=1,
-            socket_timeout=1
+            host=self._redis_host,
+            port=self._redis_port,
+            socket_connect_timeout=5,
+            socket_timeout=5
         )
 
         self._wait_for_redis_connection()

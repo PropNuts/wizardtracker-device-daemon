@@ -13,10 +13,10 @@ class QuietWSGIRequestHandler(WSGIRequestHandler):
         LOGGER.debug('%s {}'.format(format), self.client_address[0], *args)
 
 class ApiServer:
-    HOST = '127.0.0.1'
-    PORT = 3091
+    def __init__(self, tracker, host, port):
+        self._host = host
+        self._port = port
 
-    def __init__(self, tracker):
         self._httpd = None
         self._lock = threading.Lock()
         self._tracker = tracker
@@ -25,9 +25,9 @@ class ApiServer:
         self._lock.acquire(True)
 
         app.tracker = self._tracker
-        self._httpd = make_server(self.HOST, self.PORT, app,
+        self._httpd = make_server(self._host, self._port, app,
             handler_class=QuietWSGIRequestHandler)
-        LOGGER.info('Listening on %s:%d...', self.HOST, self.PORT)
+        LOGGER.info('Listening on %s:%d...', self._host, self._port)
 
         self._lock.release()
         self._httpd.serve_forever()

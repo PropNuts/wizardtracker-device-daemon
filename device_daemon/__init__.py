@@ -1,3 +1,4 @@
+import configparser
 import threading
 import time
 import signal
@@ -15,15 +16,35 @@ LOGGER = logging.getLogger(__name__)
 
 class Runner:
     def __init__(self):
-        self._datastream_server = DataStreamServer()
-        self._tracker = TrackerController(self._datastream_server)
-        self._api_server = ApiServer(self._tracker)
+        self._config = self._get_config()
+
+        self._datastream_server = DataStreamServer(
+            redis_host=self._config['datastream']['redis_host'],
+            redis_port=self._config['datastream'].getint('redis_port')
+        )
+
+        self._tracker = TrackerController(
+            self._datastream_server,
+            baudrate=self._config['device'].getint('baudrate')
+        )
+
+        self._api_server = ApiServer(
+            self._tracker,
+            host=self._config['api']['listen_host'],
+            port=self._config['api'].getint('listen_port')
+        )
 
         self._tracker_thread = threading.Thread(target=self._tracker.start)
         self._api_thread = threading.Thread(target=self._api_server.start)
         self._datastream_thread = threading.Thread(
             target=self._datastream_server.start
         )
+
+    def _get_config(self):
+        config = configparser.ConfigParser()
+        config.read('./config.ini')
+
+        return config
 
     def _exit_handler(self, signum, frame):
         LOGGER.info('Stopping threads...')
@@ -48,6 +69,8 @@ class Runner:
             level=logging.DEBUG,
             fmt='[%(name)s] %(levelname)s %(message)s')
         signal.signal(signal.SIGINT, self._exit_handler)
+
+        logging.getLogger().setLevel(logging.INFO)
 
         LOGGER.info('Starting threads...')
 
